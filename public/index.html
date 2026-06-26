@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Café Aroma — Inicio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span>☕</span> Café Aroma
+    </div>
+    <nav>
+      <div id="auth-links">
+        <a href="/login.html">Iniciar sesión</a>
+        <a href="/register.html">Registrarse</a>
+      </div>
+      <div id="user-nav" class="hidden">
+        <span class="user-greeting">Hola, <strong id="username-display"></strong></span>
+        <a href="/menu.html">Menús</a>
+        <button id="logout-btn">Cerrar sesión</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Bienvenido a Café Aroma</h1>
+      <p>Disfruta de nuestros cafés artesanales y deliciosas comidas. Regístrate para explorar nuestros menús y realizar tus pedidos.</p>
+      <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="/register.html" class="btn">Crear cuenta</a>
+        <a href="/menu.html" class="btn btn-secondary">Ver menús</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 Café Aroma — Tu rincón de confianza</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

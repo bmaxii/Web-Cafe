@@ -1,0 +1,4 @@
+node_modules/
+cafeteria.db
+*.db-journal
+.env

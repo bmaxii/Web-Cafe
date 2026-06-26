@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Café Aroma — Menús</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span>☕</span> <a href="/" style="color: white; text-decoration: none;">Café Aroma</a>
+    </div>
+    <nav>
+      <div id="auth-links">
+        <a href="/login.html">Iniciar sesión</a>
+        <a href="/register.html">Registrarse</a>
+      </div>
+      <div id="user-nav" class="hidden">
+        <span class="user-greeting">Hola, <strong id="username-display"></strong></span>
+        <button id="logout-btn">Cerrar sesión</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Nuestros Menús</h1>
+      <p>Selecciona tus productos favoritos y realiza tu pedido</p>
+    </section>
+
+    <div id="login-notice" class="alert alert-error hidden" style="max-width: 600px; margin: 0 auto 2rem;">
+      Debes <a href="/login.html">iniciar sesión</a> para realizar compras.
+    </div>
+
+    <div id="menus-container"></div>
+
+    <section class="orders-section" id="orders-section">
+      <h2>Mis pedidos</h2>
+      <div id="orders-container">
+        <p style="color: var(--text-muted);">Inicia sesión para ver tu historial de pedidos.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="cart-bar" id="cart-bar">
+    <div class="cart-info">
+      <span id="cart-count">0 productos</span> —
+      Total: <span class="cart-total" id="cart-total">$0.00</span>
+    </div>
+    <button class="btn" id="checkout-btn">Comprar</button>
+  </div>
+
+  <footer>
+    <p>&copy; 2024 Café Aroma — Tu rincón de confianza</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentUser = null;
+    const cart = new Map();
+
+    function updateCartBar() {
+      const bar = document.getElementById('cart-bar');
+      let count = 0;
+      let total = 0;
+
+      cart.forEach(({ quantity, price }) => {
+        count += quantity;
+        total += quantity * price;
+      });
+
+      if (count > 0 && currentUser) {
+        bar.classList.add('visible');
+        document.getElementById('cart-count').textContent = `${count} producto${count > 1 ? 's' : ''}`;
+        document.getElementById('cart-total').textContent = formatPrice(total);
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
+
+    function syncCartFromInputs() {
+      cart.clear();
+      document.querySelectorAll('.menu-card').forEach((card) => {
+        const input = card.querySelector('input[type="number"]');
+        const qty = parseInt(input.value, 10);
+        if (qty > 0) {
+          cart.set(parseInt(card.dataset.id, 10), {
+            quantity: qty,
+            price: parseFloat(card.dataset.price)
+          });
+        }
+      });
+      updateCartBar();
+    }
+
+    function renderMenus(menus) {
+      const container = document.getElementById('menus-container');
+      const icons = ['☕', '🥐'];
+
+      container.innerHTML = menus.map((menu, i) => `
+        <section class="menu-section">
+          <h2>${icons[i] || '🍽️'} ${menu.name}</h2>
+          <p class="menu-desc">${menu.description}</p>
+          <div class="menu-grid">
+            ${menu.items.map((item) => `
+              <div class="menu-card" data-id="${item.id}" data-price="${item.price}">
+                <h3>${item.name}</h3>
+                <p class="description">${item.description}</p>
+                <p class="price">${formatPrice(item.price)}</p>
+                <div class="quantity-row">
+                  <label for="qty-${item.id}">Cantidad:</label>
+                  <input type="number" id="qty-${item.id}" min="0" value="0"
+                    ${currentUser ? '' : 'disabled'}>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `).join('');
+
+      container.querySelectorAll('input[type="number"]').forEach((input) => {
+        input.addEventListener('change', syncCartFromInputs);
+        input.addEventListener('input', syncCartFromInputs);
+      });
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('orders-container');
+
+      if (!orders.length) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Aún no has realizado pedidos.</p>';
+        return;
+      }
+
+      container.innerHTML = orders.map((order) => `
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <span class="order-id">Pedido #${order.id}</span>
+              <span class="order-date">${formatDate(order.created_at)}</span>
+            </div>
+            <span class="order-total">${formatPrice(order.total)}</span>
+          </div>
+          ${order.items.map((item) => `
+            <div class="order-item">
+              <span>${item.name} x${item.quantity}</span>
+              <span>${formatPrice(item.unit_price * item.quantity)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+      if (!currentUser) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const items = [];
+      cart.forEach((data, menuItemId) => {
+        items.push({ menuItemId, quantity: data.quantity });
+      });
+
+      if (items.length === 0) return;
+
+      try {
+        const result = await API.purchase(items);
+        alert(`¡Compra exitosa! Pedido #${result.order.id} — Total: ${formatPrice(result.order.total)}`);
+
+        cart.clear();
+        document.querySelectorAll('.menu-card input[type="number"]').forEach((input) => {
+          input.value = 0;
+        });
+        updateCartBar();
+
+        const orders = await API.getOrders();
+        renderOrders(orders);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    (async () => {
+      currentUser = await checkAuth();
+      updateNav(currentUser);
+
+      if (!currentUser) {
+        document.getElementById('login-notice').classList.remove('hidden');
+      }
+
+      const menus = await API.getMenus();
+      renderMenus(menus);
+
+      if (currentUser) {
+        try {
+          const orders = await API.getOrders();
+          renderOrders(orders);
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

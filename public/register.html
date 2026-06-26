@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Café Aroma — Registro</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span>☕</span> <a href="/" style="color: white; text-decoration: none;">Café Aroma</a>
+    </div>
+    <nav>
+      <a href="/login.html">Iniciar sesión</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="auth-container">
+      <h2>Crear cuenta</h2>
+      <div id="alert"></div>
+      <form id="register-form">
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <input type="text" id="username" name="username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-block">Registrarse</button>
+      </form>
+      <p class="auth-link">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById('alert');
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        await API.register(username, email, password);
+        window.location.href = '/menu.html';
+      } catch (err) {
+        showAlert(alert, err.message);
+      }
+    });
+  </script>
+</body>
+</html>
